@@ -9,13 +9,13 @@ describe("UnifiedSmartVault", function () {
     return { vault, owner1, owner2, otherAccount };
   }
 
-  it("باید موجودی را به درستی واریز و گزارش کند", async function () {
+  it("Should deposit and report balance correctly", async function () {
     const { vault } = await deployVault();
     await vault.deposit({ value: ethers.parseEther("1.0") });
     expect(await vault.getBalance()).to.equal(ethers.parseEther("1.0"));
   });
 
-  it("باید اجازه دهد مالکین برداشت کنند", async function () {
+  it("Should allow owners to withdraw funds", async function () {
     const { vault, owner1 } = await deployVault();
     await vault.deposit({ value: ethers.parseEther("1.0") });
     
@@ -25,13 +25,13 @@ describe("UnifiedSmartVault", function () {
     expect(await vault.getBalance()).to.equal(ethers.parseEther("0.5"));
   });
 
-  it("باید کلید جلسه را به درستی ست کند", async function () {
+  it("Should set the session key correctly", async function () {
     const { vault, otherAccount } = await deployVault();
     await vault.setSessionKey(otherAccount.address, true);
     expect(await vault.isSessionKey(otherAccount.address)).to.equal(true);
   });
 
-  it("باید عملیات دسته‌ای (Batch) را اجرا کند", async function () {
+  it("Should execute batch operations successfully", async function () {
     const { vault, otherAccount } = await deployVault();
     await vault.deposit({ value: ethers.parseEther("1.0") });
 
