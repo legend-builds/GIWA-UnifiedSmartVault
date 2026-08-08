@@ -3,11 +3,11 @@
 A production-grade, modular smart contract built for advanced EVM environments[cite: 1]. This protocol introduces dual-ownership control, native session-key management, gas sponsorship (Paymaster) integration, and secure batch execution capabilities[cite: 1].
 
 ---
+## 🌐 Live Demo & Deployment
 
-## 🚀 Deployed Contracts (GIWA Sepolia Testnet)
-
-* **UnifiedSmartVault Contract Address:** `0xDC541A92546c7A6C5D4fF7e133574e6764AC7fCe`
-* **Network:** GIWA Sepolia Testnet
+* **Live Frontend Dashboard:** [Netlify Live App](https://curious-crostata-b67241.netlify.app)[cite: 9]
+* **UnifiedSmartVault Contract Address:** `0xDC541A92546c7A6C5D4fF7e133574e6764AC7fCe`[cite: 1]
+* **Network:** GIWA Sepolia Testnet[cite: 1]
 * **Explorer Verification:** Fully verified and interactable via block explorer[cite: 1].
 
 ---
