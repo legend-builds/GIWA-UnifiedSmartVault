@@ -1,3 +1,5 @@
+<img width="1091" height="944" alt="Screenshot (2072)" src="https://github.com/user-attachments/assets/50fedc70-700e-4cc4-9bb4-347bacc49a13" />
+
 # Unified Smart Vault (Modular Account Abstraction & Asset Management)
 
 A production-grade, modular smart contract built for advanced EVM environments[cite: 1]. This protocol introduces dual-ownership control, native session-key management, gas sponsorship (Paymaster) integration, and secure batch execution capabilities[cite: 1].
