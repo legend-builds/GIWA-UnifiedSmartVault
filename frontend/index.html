@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unified Smart Vault – GIWA</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 40px 20px; }
+    .container { max-width: 580px; margin: 0 auto; }
+    h1 { font-size: 1.8rem; margin-bottom: 8px; color: #38bdf8; }
+    .subtitle { color: #94a3b8; margin-bottom: 30px; font-size: 0.95rem; }
+    .card { background: #1e293b; border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid #334155; }
+    .label { font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
+    .value { font-size: 1.1rem; font-weight: 600; word-break: break-all; }
+    input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #475569; background: #0f172a; color: white; margin-bottom: 12px; font-size: 1rem; }
+    button { width: 100%; padding: 13px; border-radius: 10px; border: none; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
+    .btn-primary { background: #38bdf8; color: #0f172a; }
+    .btn-primary:hover { background: #7dd3fc; }
+    .btn-secondary { background: #334155; color: white; }
+    .btn-secondary:hover { background: #475569; }
+    .btn-danger { background: #ef4444; color: white; }
+    #log { background: #020617; border-radius: 10px; padding: 14px; font-size: 0.85rem; height: 160px; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; }
+    .status { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; margin-top: 8px; }
+    .connected { background: #065f46; color: #6ee7b7; }
+    .disconnected { background: #7f1d1d; color: #fca5a5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Unified Smart Vault</h1>
+    <p class="subtitle">GIWA Sepolia • Dual Ownership + Session Keys + Batch</p>
+
+    <div class="card">
+      <div class="label">Network</div>
+      <div class="value">GIWA Sepolia (Chain ID: 91342)</div>
+      <div class="label" style="margin-top:14px">Contract</div>
+      <div class="value" id="contractAddress">0xDC541A92546c7A6C5D4fF7e133574e6764AC7fCe</div>
+      <div id="walletStatus" class="status disconnected">Wallet not connected</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Vault Balance</div>
+      <div class="value" id="vaultBalance">—</div>
+      <button class="btn-secondary" onclick="connectWallet()">Connect Wallet</button>
+      <button class="btn-secondary" onclick="updateBalance()">Refresh Balance</button>
+    </div>
+
+    <div class="card">
+      <div class="label">Deposit (ETH)</div>
+      <input type="number" id="depositAmount" placeholder="0.01" step="0.001" />
+      <button class="btn-primary" onclick="deposit()">Deposit</button>
+    </div>
+
+    <div class="card">
+      <div class="label">Withdraw (Owner only)</div>
+      <input type="number" id="withdrawAmount" placeholder="0.01" step="0.001" />
+      <button class="btn-danger" onclick="withdraw()">Withdraw</button>
+    </div>
+
+    <div class="card">
+      <div class="label">Set Session Key</div>
+      <input type="text" id="sessionKeyAddress" placeholder="0x..." />
+      <button class="btn-primary" onclick="setSessionKey(true)">Activate Session Key</button>
+      <button class="btn-secondary" onclick="setSessionKey(false)">Deactivate</button>
+    </div>
+
+    <div class="card">
+      <div class="label">Activity Log</div>
+      <div id="log">Ready. Connect wallet to start.</div>
+    </div>
+  </div>
+
+  <script>
+    const CONTRACT_ADDRESS = "0xDC541A92546c7A6C5D4fF7e133574e6764AC7fCe";
+    const GIWA_CHAIN_ID = "0x164ce"; // 91342 in hex
+
+    const ABI = [
+      "function deposit() payable",
+      "function withdraw(uint256 amount)",
+      "function getBalance() view returns (uint256)",
+      "function setSessionKey(address key, bool status)",
+      "function isSessionKey(address) view returns (bool)",
+      "function owner1() view returns (address)",
+      "function owner2() view returns (address)",
+      "function batchExecute(address[] targets, uint256[] values, bytes[] datas)"
+    ];
+
+    let provider, signer, vault;
+
+    function log(msg) {
+      const el = document.getElementById("log");
+      el.textContent = new Date().toLocaleTimeString() + " → " + msg + "\n" + el.textContent;
+    }
+
+    async function connectWallet() {
+      try {
+        if (!window.ethereum) {
+          alert("Please install MetaMask or Rabby");
+          return;
+        }
+
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+
+        // Switch to GIWA Sepolia
+        try {
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: GIWA_CHAIN_ID }],
+          });
+        } catch (switchError) {
+          if (switchError.code === 4902) {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [{
+                chainId: GIWA_CHAIN_ID,
+                chainName: "GIWA Sepolia",
+                rpcUrls: ["https://sepolia-rpc.giwa.io"],
+                nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+                blockExplorerUrls: ["https://sepolia-explorer.giwa.io"]
+              }],
+            });
+          }
+        }
+
+        signer = await provider.getSigner();
+        vault = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+        const address = await signer.getAddress();
+        document.getElementById("walletStatus").textContent = "Connected: " + address.slice(0, 6) + "..." + address.slice(-4);
+        document.getElementById("walletStatus").className = "status connected";
+        log("Wallet connected: " + address);
+        updateBalance();
+      } catch (err) {
+        log("Connection failed: " + err.message);
+      }
+    }
+
+    async function updateBalance() {
+      if (!vault) return;
+      try {
+        const bal = await vault.getBalance();
+        document.getElementById("vaultBalance").textContent = ethers.formatEther(bal) + " ETH";
+      } catch (err) {
+        log("Balance error: " + err.message);
+      }
+    }
+
+    async function deposit() {
+      if (!vault) return alert("Connect wallet first");
+      const amount = document.getElementById("depositAmount").value;
+      if (!amount) return alert("Enter amount");
+      try {
+        log("Sending deposit of " + amount + " ETH...");
+        const tx = await vault.deposit({ value: ethers.parseEther(amount) });
+        log("Tx submitted: " + tx.hash);
+        await tx.wait();
+        log("✅ Deposit successful");
+        updateBalance();
+      } catch (err) {
+        log("Deposit failed: " + (err.reason || err.message));
+      }
+    }
+
+    async function withdraw() {
+      if (!vault) return alert("Connect wallet first");
+      const amount = document.getElementById("withdrawAmount").value;
+      if (!amount) return alert("Enter amount");
+      try {
+        log("Withdrawing " + amount + " ETH...");
+        const tx = await vault.withdraw(ethers.parseEther(amount));
+        log("Tx submitted: " + tx.hash);
+        await tx.wait();
+        log("✅ Withdraw successful");
+        updateBalance();
+      } catch (err) {
+        log("Withdraw failed: " + (err.reason || err.message));
+      }
+    }
+
+    async function setSessionKey(status) {
+      if (!vault) return alert("Connect wallet first");
+      const key = document.getElementById("sessionKeyAddress").value;
+      if (!key) return alert("Enter session key address");
+      try {
+        log((status ? "Activating" : "Deactivating") + " session key...");
+        const tx = await vault.setSessionKey(key, status);
+        log("Tx submitted: " + tx.hash);
+        await tx.wait();
+        log("✅ Session key updated");
+      } catch (err) {
+        log("Session key failed: " + (err.reason || err.message));
+      }
+    }
+  </script>
+</body>
+</html>
