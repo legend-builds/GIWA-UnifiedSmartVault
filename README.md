@@ -1,4 +1,4 @@
-<img width="1091" height="944" alt="Screenshot (2072)" src="https://github.com/user-attachments/assets/50fedc70-700e-4cc4-9bb4-347bacc49a13" />
+
 
 # Unified Smart Vault (Modular Account Abstraction & Asset Management)
 
