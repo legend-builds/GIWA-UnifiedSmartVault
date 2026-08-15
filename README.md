@@ -1,3 +1,5 @@
+<img width="1827" height="890" alt="demo" src="https://github.com/user-attachments/assets/f900bf16-d461-46e4-9372-3d805d9f46b4" />
+
 ### Note to Reviewers (Stage 3)
 
 The current live contract on GIWA Sepolia (0xDC541A92546c7A6C5D4fF7e133574e6764AC7fCe) is the stable version under review.
